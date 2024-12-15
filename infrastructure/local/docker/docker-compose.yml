@@ -1,0 +1,1 @@
+# Placeholder. This file will describe Docker containers to be run in order to build and reproduce GrapheneOS. It will read environment variables from a .env file from this same directory here.

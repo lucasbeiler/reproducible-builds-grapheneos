@@ -1,0 +1,1 @@
+# Placeholder. This file will describe a Docker image to be built and provide the build and comparison environment.

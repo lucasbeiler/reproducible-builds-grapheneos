@@ -1,0 +1,60 @@
+#cloud-config
+timezone: US/Eastern
+users:
+  - name: $NONROOT_USER
+    shell: /bin/bash
+write_files: # I store the scripts inside /usr/local/bin for convenience as it is already part of PATH.
+- encoding: b64
+  content: ${STARTUP_SCRIPT_B64}
+  owner: root:root
+  path: /usr/local/bin/startup_script
+  permissions: '0755'
+- encoding: b64
+  content: ${BUILD_GOS_B64}
+  owner: root:root
+  path: /usr/local/bin/build_gos.gz
+  permissions: '0755'
+- encoding: b64
+  content: ${DETECT_DEVICE_B64}
+  owner: root:root
+  path: /usr/local/bin/detect_device.gz
+  permissions: '0755'
+- encoding: b64
+  content: ${EXTRACT_VBMETA_HASHES_TO_FILE_B64}
+  owner: root:root
+  path: /usr/local/bin/extract_vbmeta_hashes_to_file.gz
+  permissions: '0755'
+- encoding: b64
+  content: ${GET_KERNEL_TAG_B64}
+  owner: root:root
+  path: /usr/local/bin/get_kernel_tag.gz
+  permissions: '0755'
+- encoding: b64
+  content: ${COMPARE_GOS_B64}
+  owner: root:root
+  path: /usr/local/bin/compare_gos.gz
+  permissions: '0755'
+- encoding: b64
+  content: ${PAYLOAD_HASH_READER_B64}
+  owner: root:root
+  path: /usr/local/bin/payload_hash_reader.gz
+  permissions: '0755'
+- path: /etc/profile.d/custom_common_variables.sh
+  content: |
+    export PIXEL_CODENAME=$PIXEL_CODENAME
+    export GOS_BUILD_NUMBER=$GOS_BUILD_NUMBER
+    export GOS_BUILD_DATETIME=$GOS_BUILD_DATETIME
+    export NONROOT_USER=$NONROOT_USER
+  permissions: '0755'
+- path: /root/.sensitive_vars
+  append: true
+  content: |
+    # Variables that should be exclusive to the root user.
+    export HETZNER_API_TOKEN=$HETZNER_API_TOKEN
+    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+    export AWS_BUCKET_NAME=$AWS_BUCKET_NAME
+
+runcmd:
+    - [ /usr/local/bin/startup_script ]

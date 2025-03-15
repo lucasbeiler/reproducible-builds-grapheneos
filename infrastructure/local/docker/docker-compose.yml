@@ -1,0 +1,12 @@
+version: '3.8'
+
+## This is a placeholder and will not work currently.
+
+services:
+  local_gos_reproducibility:
+    image: debian:12-slim
+    volumes:
+      - ../../../scripts/:/usr/local/bin
+    command: /bin/bash /usr/local/bin/startup_script.sh
+    env_file: ".env"
+    entrypoint: /bin/bash -c "/usr/local/bin/startup_script.sh"

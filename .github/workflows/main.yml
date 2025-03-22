@@ -1,0 +1,26 @@
+name: Actions
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Runs every 30th minute (its twice an hour).
+# on: workflow_dispatch
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    env:
+      HETZNER_API_TOKEN: ${{ secrets.HETZNER_API_TOKEN }}
+      HETZNER_LOCATION: ${{ secrets.HETZNER_LOCATION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+      PIXEL_CODENAMES: ${{ secrets.PIXEL_CODENAMES }}
+      NONROOT_USER: ${{ secrets.NONROOT_USER }}
+      GIT_COOKIES_B64: ${{ secrets.GIT_COOKIES_B64 }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Run create_server.sh
+        run: |
+          bash ./infrastructure/hetzner/create_server.sh

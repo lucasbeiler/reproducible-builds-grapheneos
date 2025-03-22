@@ -1,0 +1,40 @@
+#cloud-config
+timezone: US/Eastern
+users:
+  - name: $NONROOT_USER
+    shell: /bin/bash
+write_files:
+- encoding: b64
+  content: ${STARTUP_SCRIPT_B64}
+  owner: root:root
+  path: /usr/local/bin/startup_script
+  permissions: '0755'
+- path: /etc/reproducible-builds-grapheneos.env
+  content: |
+    PIXEL_CODENAME=$PIXEL_CODENAME
+    GOS_BUILD_NUMBER=$GOS_BUILD_NUMBER
+    GOS_BUILD_DATETIME=$GOS_BUILD_DATETIME
+    NONROOT_USER=$NONROOT_USER
+  permissions: '0755'
+- encoding: b64
+  content: ${GIT_COOKIES_B64}
+  owner: root:root
+  path: /etc/gitcookies
+  permissions: '0755'
+- encoding: b64
+  content: ${DOCKER_COMPOSE_FILE_B64}
+  owner: root:root
+  path: /etc/docker-compose.reproducible-builds-grapheneos.yml
+  permissions: '0755'
+- path: /root/.sensitive_vars
+  append: true
+  content: |
+    # Variables that should be exclusive to the root user.
+    export HETZNER_API_TOKEN=$HETZNER_API_TOKEN
+    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+    export AWS_BUCKET_NAME=$AWS_BUCKET_NAME
+
+runcmd:
+    - [ /usr/local/bin/startup_script ]

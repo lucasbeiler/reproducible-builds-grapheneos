@@ -74,7 +74,7 @@ echo "[INFO] Preparing adevtool..."
 yarnpkg install --cwd vendor/adevtool/
 source build/envsetup.sh
 lunch sdk_phone64_x86_64-cur-user
-m aapt2 lpunpack deapexer dexdump
+m aapt2 lpunpack deapexer dexdump ${ADDITIONAL_DEPS_TO_BUILD_WITH_M:-}
 echo "[INFO] Downloading and placing vendor blobs..."
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin vendor/adevtool/bin/run generate-all -d ${PIXEL_CODENAME}
 

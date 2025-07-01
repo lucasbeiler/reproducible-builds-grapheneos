@@ -44,6 +44,11 @@ if [[ "${GOS_BUILD_NUMBER}" -ge 2025061600 ]]; then
  KERNEL_BUILD_COMMAND="./build_${PIXEL_GENERATION_CODENAME}.sh --lto=full" # 2025061600 already includes kernel drivers and build system from Android 16.
 fi
 
+# Actual Android 16 releases.
+if [[ "${GOS_BUILD_NUMBER}" -ge 2025062900 ]]; then
+  export ADDITIONAL_DEPS_TO_BUILD_WITH_M="arsclib"
+fi
+
 # Android 15 QPR2 builds using Android 16 firmware backports require a temporary workaround via adevtool.
 if [[ "$GOS_BUILD_NUMBER" -ge 2025061300 && "$GOS_BUILD_NUMBER" -le 2025062700 ]]; then
   export FIRMWARE_DIR="$(mktemp -d)/vendor/google_devices-firmware"

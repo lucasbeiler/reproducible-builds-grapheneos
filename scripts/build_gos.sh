@@ -53,6 +53,7 @@ REAL_KERNEL_PREBUILTS_PATH=$(realpath device/google/${PIXEL_GENERATION_CODENAME}
 find ${REAL_KERNEL_PREBUILTS_PATH}/ -type f ! -path '*kernel-headers/*' -delete
 mv ~/android/kernel/${PIXEL_GENERATION_CODENAME}/out/${PIXEL_GENERATION_CODENAME}/dist/* ${REAL_KERNEL_PREBUILTS_PATH}
 rm -rf ~/android/kernel/${PIXEL_GENERATION_CODENAME} ~/kernel_manifest-*
+unset KERNEL_GIT_TAG && unset NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP
 
 # Build microdroid kernel (pretty similar to the kernel build above).
 source /usr/local/bin/find_kernel_git_tag.sh $MICRODROID_KERNEL_VERSION $MICRODROID_KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $MICRODROID_KERNEL_VERSION
@@ -64,9 +65,9 @@ repo sync -j8 --retry-fetches=6 --force-sync --no-clone-bundle --no-tags
 
 # If needed, force localversion string and build timestamp to values obtained from the official build, in order to workaround some issues.
 if [[ "${NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP}" == true ]]; then
-  echo "[DEBUG] Forcing microdroid kernel build localversion string and build timestamp to, respectively: -${MICRODROID_KERNEL_BUILD_STRING#*-} and ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH}"
+  echo "[DEBUG] Forcing microdroid kernel build localversion string and build timestamp to, respectively: ${MICRODROID_KERNEL_BUILD_STRING} and ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH}"
   cd common
-  echo -e '#!/bin/sh\necho' "-${MICRODROID_KERNEL_BUILD_STRING#*-}" > scripts/setlocalversion
+  echo -e '#!/bin/sh\necho' "${MICRODROID_KERNEL_BUILD_STRING}" > scripts/setlocalversion
   GIT_COMMITTER_DATE=$MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH GIT_AUTHOR_DATE=$MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH git commit -a --amend --reset-author --no-edit
   cd ..
 else

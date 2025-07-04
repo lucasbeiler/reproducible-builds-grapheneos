@@ -39,50 +39,5 @@ echo "[DEBUG] Kernel build string: ${KERNEL_BUILD_STRING}; Kernel version: ${KER
 echo "[DEBUG] Microdroid kernel build string: ${MICRODROID_KERNEL_BUILD_STRING}; Kernel version: ${MICRODROID_KERNEL_VERSION}; Kernel commit hash: ${MICRODROID_KERNEL_COMMIT_SHA}; Kernel build timestamp: ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH};"
 echo "[DEBUG] Official build SPL: ${GOS_BUILD_SPL}; Official build DATETIME: ${GOS_BUILD_DATETIME};"
 
-# Change some variables for releases based on Android 15 QPR2 or newer.
-if [[ "${GOS_BUILD_SPL}" -ge 20250305 ]]; then
-  PIXEL_GENERATION_SOC_CODENAME="pixel"
-  KERNEL_BUILD_COMMAND="./build_${PIXEL_GENERATION_CODENAME}.sh --config=no_download_gki --config=no_download_gki_fips140 --lto=full"
-fi
-
-# Change some variables for releases based on Android 16 or newer.
-if [[ "${GOS_BUILD_NUMBER}" -ge 2025061600 ]]; then
- KERNEL_BUILD_COMMAND="./build_${PIXEL_GENERATION_CODENAME}.sh --lto=full" # 2025061600 already includes kernel drivers and build system from Android 16.
-fi
-
-# Actual Android 16 releases.
-if [[ "${GOS_BUILD_NUMBER}" -ge 2025062900 ]]; then
-  export ADDITIONAL_DEPS_TO_BUILD_WITH_M="arsclib"
-fi
-
-# Android 15 QPR2 builds using Android 16 firmware backports require a temporary workaround via adevtool.
-if [[ "$GOS_BUILD_NUMBER" -ge 2025061300 && "$GOS_BUILD_NUMBER" -le 2025062700 ]]; then
-  export FIRMWARE_DIR="$(mktemp -d)/vendor/google_devices-firmware"
-  export DOWNLOAD_DIR="${FIRMWARE_DIR}/../../firmware_download_dir"
-  mkdir -p "${DOWNLOAD_DIR}" "${FIRMWARE_DIR}"
-
-  declare -A FIRMWARE_URLS
-  FIRMWARE_URLS[tegu]="https://dl.google.com/dl/android/aosp/tegu-bp2a.250605.031.a2-factory-aecd8a3b.zip"
-  FIRMWARE_URLS[comet]="https://dl.google.com/dl/android/aosp/comet-bp2a.250605.031.a3-factory-1f6bd727.zip"
-  FIRMWARE_URLS[caiman]="https://dl.google.com/dl/android/aosp/caiman-bp2a.250605.031.a2-factory-ff281827.zip"
-  FIRMWARE_URLS[komodo]="https://dl.google.com/dl/android/aosp/komodo-bp2a.250605.031.a2-factory-4cd869ec.zip"
-  FIRMWARE_URLS[tokay]="https://dl.google.com/dl/android/aosp/tokay-bp2a.250605.031.a2-factory-df553d50.zip"
-  FIRMWARE_URLS[akita]="https://dl.google.com/dl/android/aosp/akita-bp2a.250605.031.a2-factory-ee6b1148.zip"
-  FIRMWARE_URLS[husky]="https://dl.google.com/dl/android/aosp/husky-bp2a.250605.031.a2-factory-bc412146.zip"
-  FIRMWARE_URLS[shiba]="https://dl.google.com/dl/android/aosp/shiba-bp2a.250605.031.a2-factory-4453bca2.zip"
-  FIRMWARE_URLS[felix]="https://dl.google.com/dl/android/aosp/felix-bp2a.250605.031.a2-factory-49bbb5b5.zip"
-  FIRMWARE_URLS[lynx]="https://dl.google.com/dl/android/aosp/lynx-bp2a.250605.031.a2-factory-4246da73.zip"
-  FIRMWARE_URLS[cheetah]="https://dl.google.com/dl/android/aosp/cheetah-bp2a.250605.031.a2-factory-f5e122c5.zip"
-  FIRMWARE_URLS[panther]="https://dl.google.com/dl/android/aosp/panther-bp2a.250605.031.a2-factory-53161cbb.zip"
-  FIRMWARE_URLS[bluejay]="https://dl.google.com/dl/android/aosp/bluejay-bp2a.250605.031.a2-factory-d7a89215.zip"
-  FIRMWARE_URLS[oriole]="https://dl.google.com/dl/android/aosp/oriole-bp2a.250605.031.a2-factory-747402f2.zip"
-  FIRMWARE_URLS[raven]="https://dl.google.com/dl/android/aosp/raven-bp2a.250605.031.a2-factory-fdd1008f.zip"
-
-  curl -Lo "${DOWNLOAD_DIR}/official_firmware.zip" --url "${FIRMWARE_URLS[$PIXEL_CODENAME]}"
-  unzip -j "${DOWNLOAD_DIR}/official_firmware.zip" '*.img' -d "${FIRMWARE_DIR}"
-  rm -rf ${DOWNLOAD_DIR}
-  unset DOWNLOAD_DIR && unset FIRMWARE_URLS
-fi
-
 # Finish.
 rm -rf ${TMP_DIR}

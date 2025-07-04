@@ -28,11 +28,11 @@ source /usr/local/bin/detect_device.sh
 source /usr/local/bin/extract_info_from_official_build.sh
 
 # Fetch kernel source code tree.
-source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_VERSION $KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $PIXEL_GENERATION_SOC_CODENAME
+source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_VERSION $KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $PIXEL_DEVICE_KERNEL_MANIFEST_REPO_SUFFIX
 echo "[INFO] Building kernel (using tag ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER})..."
 mkdir -p ~/android/kernel/${PIXEL_GENERATION_CODENAME}
 cd ~/android/kernel/${PIXEL_GENERATION_CODENAME}
-repo init --depth=1 -u https://github.com/GrapheneOS/kernel_manifest-${PIXEL_GENERATION_SOC_CODENAME}.git -b refs/tags/${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER}
+repo init --depth=1 -u https://github.com/GrapheneOS/kernel_manifest-${PIXEL_DEVICE_KERNEL_MANIFEST_REPO_SUFFIX}.git -b refs/tags/${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER}
 repo sync -j8 --retry-fetches=6 --force-sync --no-clone-bundle --no-tags
 
 # If needed, force localversion string and build timestamp to values obtained from the official build, in order to workaround some issues.
@@ -88,7 +88,7 @@ echo "[INFO] Preparing adevtool..."
 yarnpkg install --cwd vendor/adevtool/
 source build/envsetup.sh
 lunch sdk_phone64_x86_64-cur-user
-m aapt2 lpunpack deapexer dexdump ${ADDITIONAL_DEPS_TO_BUILD_WITH_M:-}
+m aapt2 lpunpack deapexer dexdump arsclib
 echo "[INFO] Downloading and placing vendor blobs..."
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin vendor/adevtool/bin/run generate-all -d ${PIXEL_CODENAME}
 

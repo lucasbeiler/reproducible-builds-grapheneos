@@ -28,6 +28,7 @@ source /usr/local/bin/detect_device.sh
 source /usr/local/bin/extract_info_from_official_build.sh
 
 # Fetch kernel source code tree.
+source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_VERSION $KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $PIXEL_GENERATION_SOC_CODENAME
 echo "[INFO] Building kernel (using tag ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER})..."
 mkdir -p ~/android/kernel/${PIXEL_GENERATION_CODENAME}
 cd ~/android/kernel/${PIXEL_GENERATION_CODENAME}
@@ -35,7 +36,7 @@ repo init --depth=1 -u https://github.com/GrapheneOS/kernel_manifest-${PIXEL_GEN
 repo sync -j8 --retry-fetches=6 --force-sync --no-clone-bundle --no-tags
 
 # If needed, force localversion string and build timestamp to values obtained from the official build, in order to workaround some issues.
-if [[ "${NEED_TO_FORCE_BUILD_STRING_AND_TIMESTAMP}" == true ]]; then
+if [[ "${NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP}" == true ]]; then
   echo "[DEBUG] Forcing kernel build localversion string and build timestamp to, respectively: -${KERNEL_BUILD_STRING#*-} and ${KERNEL_BUILD_TIMESTAMP_EPOCH}"
   cd aosp
   echo -e '#!/bin/sh\necho' "-${KERNEL_BUILD_STRING#*-}" > scripts/setlocalversion
@@ -54,16 +55,29 @@ mv ~/android/kernel/${PIXEL_GENERATION_CODENAME}/out/${PIXEL_GENERATION_CODENAME
 rm -rf ~/android/kernel/${PIXEL_GENERATION_CODENAME} ~/kernel_manifest-*
 
 # Build microdroid kernel (pretty similar to the kernel build above).
-echo "[INFO] Building kernel for microdroid pVMs..."
-mkdir -p ~/android/kernel/6.6
-cd ~/android/kernel/6.6
-repo init --depth=1 -u https://github.com/GrapheneOS/kernel_manifest-6.6.git -b refs/tags/${GOS_BUILD_NUMBER}
+source /usr/local/bin/find_kernel_git_tag.sh $MICRODROID_KERNEL_VERSION $MICRODROID_KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $MICRODROID_KERNEL_VERSION
+echo "[INFO] Building microdroid kernel (using tag ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER})..."
+mkdir -p ~/android/kernel/${MICRODROID_KERNEL_VERSION}
+cd ~/android/kernel/${MICRODROID_KERNEL_VERSION}
+repo init --depth=1 -u https://github.com/GrapheneOS/kernel_manifest-${MICRODROID_KERNEL_VERSION}.git -b refs/tags/${MICRODROID_KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER}
 repo sync -j8 --retry-fetches=6 --force-sync --no-clone-bundle --no-tags
+
+# If needed, force localversion string and build timestamp to values obtained from the official build, in order to workaround some issues.
+if [[ "${NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP}" == true ]]; then
+  echo "[DEBUG] Forcing microdroid kernel build localversion string and build timestamp to, respectively: -${MICRODROID_KERNEL_BUILD_STRING#*-} and ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH}"
+  cd common
+  echo -e '#!/bin/sh\necho' "-${MICRODROID_KERNEL_BUILD_STRING#*-}" > scripts/setlocalversion
+  GIT_COMMITTER_DATE=$MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH GIT_AUTHOR_DATE=$MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH git commit -a --amend --reset-author --no-edit
+  cd ..
+else
+  echo "[DEBUG] Already have the expected kernel_common commit hash for this build. The expected microdroid kernel build string will be naturally produced, matching the official build."
+fi
+
 tools/bazel run //common:kernel_aarch64_microdroid_dist --config=stamp --lto=full
 cd /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}
-mv ~/android/kernel/6.6/out/kernel_aarch64_microdroid/dist/Image packages/modules/Virtualization/guest/kernel/android15-6.6/arm64/kernel-6.6
-mv ~/android/kernel/6.6/out/kernel_aarch64_microdroid/dist/* packages/modules/Virtualization/guest/kernel/android15-6.6/arm64/
-rm -rf ~/android/kernel/6.6
+mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/Image packages/modules/Virtualization/guest/kernel/android15-${MICRODROID_KERNEL_VERSION}/arm64/kernel-${MICRODROID_KERNEL_VERSION}
+mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/* packages/modules/Virtualization/guest/kernel/android15-${MICRODROID_KERNEL_VERSION}/arm64/
+rm -rf ~/android/kernel/${MICRODROID_KERNEL_VERSION}
 
 # Export important variables for OS builds.
 export BUILD_NUMBER="$GOS_BUILD_NUMBER"

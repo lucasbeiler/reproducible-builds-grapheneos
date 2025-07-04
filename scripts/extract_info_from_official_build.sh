@@ -20,7 +20,12 @@ KERNEL_BUILD_STRING=$(strings ${TMP_DIR}/*install*/*boot*.img | grep -oE '[4-7]\
 KERNEL_VERSION=$(echo "${KERNEL_BUILD_STRING}" | grep -oE '^[4-7]\.[0-9]{1,2}') || echo "[DEBUG] Kernel version extraction returned a non-zero exit code: $?"
 KERNEL_COMMIT_SHA=$(echo "${KERNEL_BUILD_STRING}" | grep -oE '[a-f0-9]+$')  || echo "[DEBUG] Kernel commit SHA extraction returned a non-zero exit code: $?"
 KERNEL_BUILD_TIMESTAMP_EPOCH=$(date -d "$(strings ${TMP_DIR}/*install*/*boot*.img | grep -oE -m1 "SMP PREEMPT [A-Za-z]{3} [A-Za-z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} UTC [0-9]{4}$" | sed 's/SMP PREEMPT //g')" +%s) || echo "[DEBUG] Kernel build timestamp extraction returned a non-zero exit code: $?"
-NEED_TO_FORCE_BUILD_STRING_AND_TIMESTAMP=true
+
+# Extract informations from the official microdroid kernel build string.
+MICRODROID_KERNEL_BUILD_STRING=$(strings ${TMP_DIR}/*install*/super*.img | grep -oE '[4-7]\.[0-9]{1,2}\.[0-9]{1,3}+-android[0-9]{1,2}-[0-9]+-g[a-f0-9]+' | grep -v "${KERNEL_BUILD_STRING}" | sort | uniq -c | sort -nr | head -n 1 | awk '{print $2}') || echo "[DEBUG] Microdroid kernel build string extraction returned a non-zero exit code: $?"
+MICRODROID_KERNEL_VERSION=$(echo "${MICRODROID_KERNEL_BUILD_STRING}" | grep -oE '^[4-7]\.[0-9]{1,2}') || echo "[DEBUG] Microdroid kernel version extraction returned a non-zero exit code: $?"
+MICRODROID_KERNEL_COMMIT_SHA=$(echo "${MICRODROID_KERNEL_BUILD_STRING}" | grep -oE '[a-f0-9]+$')  || echo "[DEBUG] Microdroid kernel commit SHA extraction returned a non-zero exit code: $?"
+MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH=$(date -d "$(strings ${TMP_DIR}/*install*/super*.img | grep $MICRODROID_KERNEL_BUILD_STRING | grep -m1 -oP '\b\w{3} \w{3}\s+\d+ \d{2}:\d{2}:\d{2} UTC \d{4}')" +%s) || echo "[DEBUG] Microdroid kernel build timestamp extraction returned a non-zero exit code: $?"
 
 # Make sure that BUILD_DATETIME is right for this official release (useful when building older releases).
 GOS_BUILD_DATETIME=$(strings ${TMP_DIR}/*install*/super*.img | grep -oP 'ro.build.date.utc=\K\d+' | head -n1) || echo "[DEBUG] BUILD_DATETIME extraction returned a non-zero exit code: $?"
@@ -31,6 +36,7 @@ GOS_BUILD_SPL=$(strings ${TMP_DIR}/*install*/super*.img | grep -oP 'ro.build.ver
 # Debugging info.
 echo "[DEBUG] Information extracted from the official build will be shown below:"
 echo "[DEBUG] Kernel build string: ${KERNEL_BUILD_STRING}; Kernel version: ${KERNEL_VERSION}; Kernel commit hash: ${KERNEL_COMMIT_SHA}; Kernel build timestamp: ${KERNEL_BUILD_TIMESTAMP_EPOCH};"
+echo "[DEBUG] Microdroid kernel build string: ${MICRODROID_KERNEL_BUILD_STRING}; Kernel version: ${MICRODROID_KERNEL_VERSION}; Kernel commit hash: ${MICRODROID_KERNEL_COMMIT_SHA}; Kernel build timestamp: ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH};"
 echo "[DEBUG] Official build SPL: ${GOS_BUILD_SPL}; Official build DATETIME: ${GOS_BUILD_DATETIME};"
 
 # Change some variables for releases based on Android 15 QPR2 or newer.
@@ -77,25 +83,6 @@ if [[ "$GOS_BUILD_NUMBER" -ge 2025061300 && "$GOS_BUILD_NUMBER" -le 2025062700 ]
   rm -rf ${DOWNLOAD_DIR}
   unset DOWNLOAD_DIR && unset FIRMWARE_URLS
 fi
-
-# Use GitHub APIs to find the right kernel tag to use.
-if [[ ! -z "$KERNEL_BUILD_STRING" || ! -z "$KERNEL_VERSION" || ! -z "$KERNEL_COMMIT_SHA" ]]; then
-  # Try to find git tags containing a commit with $KERNEL_COMMIT_SHA somewhere.
-  KERNEL_GIT_TAGS=$(curl -sL "https://github.com/GrapheneOS/kernel_common-${KERNEL_VERSION}/branch_commits/${KERNEL_COMMIT_SHA}" | grep -oP '/tag/\K[^"]\d+' || echo)
-  for candidate in $KERNEL_GIT_TAGS; do
-    if [[ ${candidate} -le ${GOS_BUILD_NUMBER} ]]; then
-      # OK, the $candidate tag has that commit somewhere, now let's check that it is actually its HEAD commit.
-      if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_common-${KERNEL_VERSION}/tags" | jq -e --arg tag "$candidate" --arg sha "$KERNEL_COMMIT_SHA" '.[] | select(.name == $tag and (.commit.sha | startswith($sha)))' >/dev/null; then
-        # OK, the $candidate tag in kernel_common points to the correct HEAD commit. Before choosing it, let's check if the tag also exists in the kernel_manifest repository.
-        if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_manifest-${PIXEL_GENERATION_SOC_CODENAME}/tags" | jq -e ".[] | select(.name == \"$candidate\")" >/dev/null; then
-          KERNEL_GIT_TAG=${candidate} && NEED_TO_FORCE_BUILD_STRING_AND_TIMESTAMP=false && break
-        fi
-      fi
-    fi
-  done;
-fi
-
-echo "[DEBUG] Kernel build will use git tag ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER} from kernel_manifest-${PIXEL_GENERATION_SOC_CODENAME}."
 
 # Finish.
 rm -rf ${TMP_DIR}

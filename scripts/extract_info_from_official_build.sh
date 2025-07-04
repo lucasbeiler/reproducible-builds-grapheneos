@@ -80,12 +80,16 @@ fi
 
 # Use GitHub APIs to find the right kernel tag to use.
 if [[ ! -z "$KERNEL_BUILD_STRING" || ! -z "$KERNEL_VERSION" || ! -z "$KERNEL_COMMIT_SHA" ]]; then
+  # Try to find git tags containing a commit with $KERNEL_COMMIT_SHA somewhere.
   KERNEL_GIT_TAGS=$(curl -sL "https://github.com/GrapheneOS/kernel_common-${KERNEL_VERSION}/branch_commits/${KERNEL_COMMIT_SHA}" | grep -oP '/tag/\K[^"]\d+' || echo)
   for candidate in $KERNEL_GIT_TAGS; do
     if [[ ${candidate} -le ${GOS_BUILD_NUMBER} ]]; then
-      # OK, the $candidate tag in kernel_common points to the correct HEAD commit. Before chosing it, let's check if the tag also exists in the kernel_manifest repository.
-      if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_manifest-${PIXEL_GENERATION_SOC_CODENAME}/tags" | jq -e ".[] | select(.name == \"$candidate\")" >/dev/null; then
-        KERNEL_GIT_TAG=${candidate} && NEED_TO_FORCE_BUILD_STRING_AND_TIMESTAMP=false && break
+      # OK, the $candidate tag has that commit somewhere, now let's check that it is actually its HEAD commit.
+      if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_common-${KERNEL_VERSION}/tags" | jq -e --arg tag "$candidate" --arg sha "$KERNEL_COMMIT_SHA" '.[] | select(.name == $tag and (.commit.sha | startswith($sha)))' >/dev/null; then
+        # OK, the $candidate tag in kernel_common points to the correct HEAD commit. Before choosing it, let's check if the tag also exists in the kernel_manifest repository.
+        if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_manifest-${PIXEL_GENERATION_SOC_CODENAME}/tags" | jq -e ".[] | select(.name == \"$candidate\")" >/dev/null; then
+          KERNEL_GIT_TAG=${candidate} && NEED_TO_FORCE_BUILD_STRING_AND_TIMESTAMP=false && break
+        fi
       fi
     fi
   done;

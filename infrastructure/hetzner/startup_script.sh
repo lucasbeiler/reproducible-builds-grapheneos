@@ -47,6 +47,6 @@ su ${NONROOT_USER} -c "
   docker rm -vf \$(docker ps -aq) && \
   docker system prune -a -f --volumes &&
 
-  # Compare GrapheneOS builds (official vs. compared).
+  # Compare GrapheneOS builds (official vs. reproduced).
   docker-compose -f /etc/docker-compose.reproducible-builds-grapheneos.yml up --abort-on-container-exit compare-gos
 "

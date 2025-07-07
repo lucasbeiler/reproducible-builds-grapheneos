@@ -4,7 +4,7 @@ set -eo pipefail
 ## Additionally, it also uses the official kernel build string to find the right git tag to use.
 
 # Download official builds to /opt/build/grapheneos/comparing/official.
-# You can reproduce older build you do these two things:
+# You can reproduce an older Android 16 build if you do these two things:
 # 1. Set GOS_BUILD_NUMBER accordingly;
 # 2. Place an existing build in the path mentioned below.
 if [[ ! -f "/opt/build/grapheneos/comparing/official/${PIXEL_CODENAME}-install-${GOS_BUILD_NUMBER}.zip" ]]; then
@@ -36,7 +36,7 @@ GOS_BUILD_SPL=$(strings ${TMP_DIR}/*install*/super*.img | grep -oP 'ro.build.ver
 # Debugging info.
 echo "[DEBUG] Information extracted from the official build will be shown below:"
 echo "[DEBUG] Kernel build string: ${KERNEL_BUILD_STRING}; Kernel version: ${KERNEL_VERSION}; Kernel commit hash: ${KERNEL_COMMIT_SHA}; Kernel build timestamp: ${KERNEL_BUILD_TIMESTAMP_EPOCH};"
-echo "[DEBUG] Microdroid kernel build string: ${MICRODROID_KERNEL_BUILD_STRING}; Kernel version: ${MICRODROID_KERNEL_VERSION}; Kernel commit hash: ${MICRODROID_KERNEL_COMMIT_SHA}; Kernel build timestamp: ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH};"
+echo "[DEBUG] Microdroid kernel build string: ${MICRODROID_KERNEL_BUILD_STRING}; Microdroid kernel version: ${MICRODROID_KERNEL_VERSION}; Microdroid kernel commit hash: ${MICRODROID_KERNEL_COMMIT_SHA}; Microdroid kernel build timestamp: ${MICRODROID_KERNEL_BUILD_TIMESTAMP_EPOCH};"
 echo "[DEBUG] Official build SPL: ${GOS_BUILD_SPL}; Official build DATETIME: ${GOS_BUILD_DATETIME};"
 
 # Finish.

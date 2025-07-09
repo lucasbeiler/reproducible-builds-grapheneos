@@ -6,6 +6,7 @@ ARG_KERNEL_COMMIT_SHA="$2"
 ARG_GOS_BUILD_NUMBER="$3"
 ARG_MANIFEST_REPO_SUFFIX="$4"
 
+export KERNEL_GIT_TAG="refs/tags/${ARG_GOS_BUILD_NUMBER}"
 export NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=true
 
 if [[ -n "$ARG_KERNEL_COMMIT_SHA" && -n "$ARG_KERNEL_VERSION" ]]; then
@@ -17,10 +18,10 @@ if [[ -n "$ARG_KERNEL_COMMIT_SHA" && -n "$ARG_KERNEL_VERSION" ]]; then
       if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_common-${ARG_KERNEL_VERSION}/tags" | jq -e --arg tag "$candidate" --arg sha "$ARG_KERNEL_COMMIT_SHA" '.[] | select(.name == $tag and (.commit.sha | startswith($sha)))' >/dev/null; then
         # OK, the $candidate tag in kernel_common points to the correct HEAD commit. Before choosing it, let's check if the tag also exists in the kernel_manifest repository.
         if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_manifest-${ARG_MANIFEST_REPO_SUFFIX}/tags" | jq -e ".[] | select(.name == \"$candidate\")" >/dev/null; then
-          export KERNEL_GIT_TAG=${candidate} && export NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=false && break
+          export KERNEL_GIT_TAG="refs/tags/${candidate}" && export NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=false && break
         fi
       fi
     fi
   done;
 fi
-echo "[DEBUG] Kernel build will use git tag ${KERNEL_GIT_TAG:-$ARG_GOS_BUILD_NUMBER} from kernel_manifest-${ARG_MANIFEST_REPO_SUFFIX}."
+echo "[DEBUG] Kernel build will use git tag ${KERNEL_GIT_TAG_OR_BRANCH_OVERRIDE:-$KERNEL_GIT_TAG} from kernel_manifest-${ARG_MANIFEST_REPO_SUFFIX}."

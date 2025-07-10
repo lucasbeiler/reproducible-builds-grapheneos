@@ -9,6 +9,16 @@ finish_script() {
   HTML_OUTPUT_FILE="/home/${NONROOT_USER}/comparing/operation_outputs/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.html"
   [[ ! -f "$HTML_OUTPUT_FILE" ]] && echo "If you're reading this, the ${PIXEL_CODENAME}-${GOS_BUILD_NUMBER} test failed. Check the logs, fix the issue, and rerun ${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}." > ${HTML_OUTPUT_FILE}
 
+  # The reproducibility HTML report is larger than usual, which likely indicates a random reproducibility issue. 
+  # ... Save the output with a different name to make GitHub Actions (via create_server.sh) trigger a new test, as the script won't find the file at the expected URL.
+  if [ -f "$HTML_OUTPUT_FILE" ] && [ $(stat -c%s "$HTML_OUTPUT_FILE") -gt 300000 ]; then
+    ATTEMPT_COUNT=$(aws s3 ls "s3://${AWS_BUCKET_NAME}/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}" --region ${AWS_DEFAULT_REGION} | wc -l)
+    if [ "$ATTEMPT_COUNT" -lt 3 ]; then
+      RANDOM_SUFFIX=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 7)
+      mv "$HTML_OUTPUT_FILE" "${HTML_OUTPUT_FILE%.html}.${RANDOM_SUFFIX}.html"
+    fi
+  fi
+
   # Delete old debug files and upload the new ones.
   aws s3 rm s3://${AWS_BUCKET_NAME}/ --recursive --exclude "*" --include "debug*.txt.gz" --include "*_log.*"
   gzip /home/${NONROOT_USER}/comparing/operation_outputs/*_log.txt || :

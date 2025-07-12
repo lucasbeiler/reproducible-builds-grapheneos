@@ -139,8 +139,8 @@ AVB_STRING_H4=""
 # grep: if there's some line other than "Successfully verified|Verifying image|([a-fA-F0-9]{64})", it has something wrong.
 grep -viE "Successfully verified|Verifying image|([a-fA-F0-9]{64})" ~/${PIXEL_CODENAME}*${GOS_BUILD_NUMBER}*.vbmeta_results.txt && AVB_STRING_H3="<h3>Something wrong with the Verified Boot hash extraction.</h3>"
 if [ -z "${AVB_STRING_H3}" ]; then
-  AVB_STRING_H3="<h3>This is the Verified Boot hash of the official build: $(grep -iE '([a-fA-F0-9]{64})' ~/${PIXEL_CODENAME}*${GOS_BUILD_NUMBER}*.vbmeta_results.txt | sort | uniq)</h3>"
-  AVB_STRING_H4="<h4>You can compare it with the Verified Boot hash attested by Auditor on your device.</h4>"
+  AVB_STRING_H3="<h3>Verified Boot hash of the official build: $(grep -iE '([a-fA-F0-9]{64})' ~/${PIXEL_CODENAME}*${GOS_BUILD_NUMBER}*.vbmeta_results.txt | sort | uniq)</h3>"
+  AVB_STRING_H4="<h4>To make sure that this official build is the same as the one running on your device, you can compare the hash above with the Verified Boot hash attested by Auditor on your device (see <a href=\"https://attestation.app\" target=\"_blank\" rel=\"noopener noreferrer\">attestation.app</a>).</h4>"
 fi
 # ... add it to the HTML_OUTPUT_FILE.
 sed -i '/<body class="diffoscope">/a\'"$AVB_STRING_H3"'\n'"$AVB_STRING_H4" $HTML_OUTPUT_FILE

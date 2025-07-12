@@ -130,8 +130,17 @@ find official/ reproduced/ -type f | gzip > /opt/build/grapheneos/comparing/oper
 
 # Compare the now unpacked install packages (official vs. reproduced).
 # NOTE: The `|| :` at the end is due to diffoscope returning non-zero exit codes when there are diffs.
-diffoscope --no-default-limits --new-file --max-page-diff-block-lines 5000 --exclude "*.png" --exclude "payload_properties.txt" --exclude-command ^zipinfo.* --exclude-command ^zipdetail.* --exclude "otacerts.zip" --exclude "*.pem" --exclude "**/META-INF/CERT*" --exclude "**/META-INF/MANIFEST.MF" --exclude "**/lost+found/**" --exclude "*vbmeta.img" --exclude "apex_pubkey" --exclude "avb_pkmd.bin" --exclude-directory-metadata yes  --html operation_outputs/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.html official/ reproduced/ || :
+HTML_OUTPUT_FILE="operation_outputs/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.html"
+diffoscope --no-default-limits --new-file --max-page-diff-block-lines 5000 --exclude "*.png" --exclude "payload_properties.txt" --exclude-command ^zipinfo.* --exclude-command ^zipdetail.* --exclude "otacerts.zip" --exclude "*.pem" --exclude "**/META-INF/CERT*" --exclude "**/META-INF/MANIFEST.MF" --exclude "**/lost+found/**" --exclude "*vbmeta.img" --exclude "apex_pubkey" --exclude "avb_pkmd.bin" --exclude-directory-metadata yes  --html ${HTML_OUTPUT_FILE} official/ reproduced/ || :
 
-grep -viE "Successfully verified|Verifying image|([a-fA-F0-9]{64})" ~/*.vbmeta_results.txt && echo "Something wrong with vbmeta checks." > /opt/build/grapheneos/comparing/operation_outputs/avb-hash-${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.txt
-echo "Verified Boot hash of the official build that was tested: $(grep -iE '([a-fA-F0-9]{64})' ~/*.vbmeta_results.txt | sort | uniq)" >> /opt/build/grapheneos/comparing/operation_outputs/avb-hash-${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.txt
-echo -e "\nYou can compare it with the Verified Boot hash attested by Auditor on your device." >> /opt/build/grapheneos/comparing/operation_outputs/avb-hash-${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.txt
+# Fetch the Verified Boot calculated before and add it to the HTML_OUTPUT_FILE.
+AVB_STRING_H3=""
+AVB_STRING_H4=""
+# grep: if there's some line other than "Successfully verified|Verifying image|([a-fA-F0-9]{64})", it has something wrong.
+grep -viE "Successfully verified|Verifying image|([a-fA-F0-9]{64})" ~/${PIXEL_CODENAME}*${GOS_BUILD_NUMBER}*.vbmeta_results.txt && AVB_STRING_H3="<h3>Something wrong with the Verified Boot hash extraction.</h3>"
+if [ -z "${AVB_STRING_H3}" ]; then
+  AVB_STRING_H3="<h3>This is the Verified Boot hash of the official build: $(grep -iE '([a-fA-F0-9]{64})' ~/${PIXEL_CODENAME}*${GOS_BUILD_NUMBER}*.vbmeta_results.txt | sort | uniq)</h3>"
+  AVB_STRING_H4="<h4>You can compare it with the Verified Boot hash attested by Auditor on your device.</h4>"
+fi
+# ... add it to the HTML_OUTPUT_FILE.
+sed -i '/<body class="diffoscope">/a\'"$AVB_STRING_H3"'\n'"$AVB_STRING_H4" $HTML_OUTPUT_FILE

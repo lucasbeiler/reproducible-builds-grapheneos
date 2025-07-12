@@ -23,4 +23,4 @@ jobs:
         uses: actions/checkout@v2
       - name: Run create_server.sh
         run: |
-          bash ./infrastructure/hetzner/create_server.sh
+          bash ./infrastructure/hetzner/clear_machines.sh; bash ./infrastructure/hetzner/create_server.sh;

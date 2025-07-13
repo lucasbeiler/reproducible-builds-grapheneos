@@ -12,7 +12,7 @@ finish_script() {
   # The reproducibility HTML report is larger than usual, which likely indicates a random reproducibility issue. 
   # ... Save the output with a different name to make GitHub Actions (via create_server.sh) trigger a new test, as the script won't find the file at the expected URL.
   if [ -f "$HTML_OUTPUT_FILE" ] && [ $(stat -c%s "$HTML_OUTPUT_FILE") -gt 300000 ]; then
-    ATTEMPT_COUNT=$(aws s3 ls "s3://${AWS_BUCKET_NAME}/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}" --region ${AWS_DEFAULT_REGION} | wc -l)
+    ATTEMPT_COUNT=$(aws s3 ls "s3://${AWS_BUCKET_NAME}/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}" --region "${AWS_DEFAULT_REGION}" 2>/dev/null | wc -l || :)
     if [ "$ATTEMPT_COUNT" -lt 3 ]; then
       RANDOM_SUFFIX=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 7)
       mv "$HTML_OUTPUT_FILE" "${HTML_OUTPUT_FILE%.html}.${RANDOM_SUFFIX}.html"

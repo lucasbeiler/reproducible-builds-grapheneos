@@ -4,11 +4,9 @@ set -euo pipefail
 # ~/gos_create_server_secrets.sh exports some secrets. Useful when testing locally. Do not expose it.
 # On GitHub Actions, they're already set as secret environment variables.
 CURL_OUTPUT="-o /dev/null"
-FORCE_REPEAT_IF_ALREADY_REPRODUCED=false
 if [[ -f ~/gos_create_server_secrets.sh ]]; then
   source ~/gos_create_server_secrets.sh
   CURL_OUTPUT=""
-  FORCE_REPEAT_IF_ALREADY_REPRODUCED=true
 fi
 
 TIME_THRESHOLD=$((6 * 60 * 60))
@@ -20,5 +18,5 @@ SERVER_IDS=$(curl -sL -H "Authorization: Bearer $HETZNER_API_TOKEN" --url "https
 
 # Delete machines.
 for SERVER_ID in $SERVER_IDS; do
-  curl -fsL -X DELETE -H "Authorization: Bearer $HETZNER_API_TOKEN" --url "https://api.hetzner.cloud/v1/servers/${SERVER_ID}" && echo "Deleted machine!"
+  curl -fsL ${CURL_OUTPUT} -X DELETE -H "Authorization: Bearer $HETZNER_API_TOKEN" --url "https://api.hetzner.cloud/v1/servers/${SERVER_ID}" && echo "Deleted machine!"
 done;

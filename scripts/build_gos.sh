@@ -23,26 +23,15 @@ git verify-tag $(git describe)
 cd ../..
 repo sync -j8 --retry-fetches=6 --force-sync --no-clone-bundle --no-tags
 
-# Set device-specific variables. Finally, extract some useful strings from the official build, and detect the right kernel_manifest git tag to use.
+# Set device-specific variables. Finally, extract some useful strings from the official build, and detect the right kernel git tag to use.
 source /usr/local/bin/detect_device.sh
 source /usr/local/bin/extract_info_from_official_build.sh
 
 # Fetch kernel source code tree.
-source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_VERSION $KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $PIXEL_DEVICE_KERNEL_MANIFEST_REPO_SUFFIX
+source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER https://github.com/GrapheneOS/kernel_common-${KERNEL_VERSION} https://gitlab.com/GrapheneOS/kernel_pixel
 echo "[INFO] Building kernel (using tag ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER})..."
-mkdir -p ~/android/kernel/${PIXEL_GENERATION_CODENAME}
-cd ~/android/kernel/${PIXEL_GENERATION_CODENAME}
-repo init --depth=1 -u https://github.com/GrapheneOS/kernel_manifest-${PIXEL_DEVICE_KERNEL_MANIFEST_REPO_SUFFIX}.git -b ${KERNEL_GIT_TAG_OR_BRANCH_OVERRIDE:-$KERNEL_GIT_TAG}
-if [ -n "${KERNEL_GIT_TAG_OR_BRANCH_OVERRIDE}" ]; then
-  # Because Google has split kernel-related, device-specific optimizations into different AOSP tags, 
-  # ... and these tags are used accordingly in different branches of grapheneos/kernel_manifest-pixel, like 16-kernel-2 and 16-kernel-3. 
-  # Even though I'm forcibly using these branches, I still want to have control over which kernel_common code to use.
-  # This is temporary and should return to normal in August. After that, no need to remove this code from here, just leave $KERNEL_GIT_TAG_OR_BRANCH_OVERRIDE empty in scripts/detect_device.sh.
-  KERNEL_COMMON_LINE_TO_USE=$(curl -sL https://raw.githubusercontent.com/GrapheneOS/kernel_manifest-${PIXEL_DEVICE_KERNEL_MANIFEST_REPO_SUFFIX}/${KERNEL_GIT_TAG}/default.xml | grep "name=\"kernel_common-6.1\"" | grep -oE '<[^>]+>')
-  sed -i 's|^\([[:space:]]*\).*name="kernel_common-6.1".*|\1'"${KERNEL_COMMON_LINE_TO_USE}"'|' .repo/manifests/default.xml
-  echo "[DEBUG] Replaced kernel_common-6.1 manifest entry with ${KERNEL_COMMON_LINE_TO_USE} in .repo/manifests/default.xml."
-fi
-repo sync -j8 --retry-fetches=6 --force-sync --no-clone-bundle --no-tags
+git clone https://gitlab.com/grapheneos/kernel_pixel.git -b ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER} --recurse-submodules ~/kernel_pixel
+cd ~/kernel_pixel
 
 # If needed, force localversion string and build timestamp to values obtained from the official build, in order to workaround some issues.
 if [[ "${NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP}" == true ]]; then
@@ -56,16 +45,18 @@ else
 fi
 
 # Build the device kernel and move it into the OS tree.
+export KLEAF_REPO_MANIFEST="aosp_manifest.xml"
 ${KERNEL_BUILD_COMMAND}
 cd /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}
 REAL_KERNEL_PREBUILTS_PATH=$(realpath device/google/${PIXEL_GENERATION_CODENAME}-kernels/*/grapheneos/)
 find ${REAL_KERNEL_PREBUILTS_PATH}/ -type f ! -path '*kernel-headers/*' -delete
-mv ~/android/kernel/${PIXEL_GENERATION_CODENAME}/out/${PIXEL_GENERATION_CODENAME}/dist/* ${REAL_KERNEL_PREBUILTS_PATH}
-rm -rf ~/android/kernel/${PIXEL_GENERATION_CODENAME} ~/kernel_manifest-*
-unset KERNEL_GIT_TAG NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP KERNEL_GIT_TAG_OR_BRANCH_OVERRIDE
+mv ~/kernel_pixel/out/${PIXEL_GENERATION_CODENAME}/dist/* ${REAL_KERNEL_PREBUILTS_PATH}
+rm -rf ~/kernel_pixel
+unset KERNEL_GIT_TAG NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP KLEAF_REPO_MANIFEST
 
 # Build microdroid kernel (pretty similar to the kernel build above).
-source /usr/local/bin/find_kernel_git_tag.sh $MICRODROID_KERNEL_VERSION $MICRODROID_KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER $MICRODROID_KERNEL_VERSION
+source /usr/local/bin/find_kernel_git_tag.sh $MICRODROID_KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER https://github.com/GrapheneOS/kernel_common-${MICRODROID_KERNEL_VERSION} https://github.com/GrapheneOS/kernel_manifest-${MICRODROID_KERNEL_VERSION}
+
 echo "[INFO] Building microdroid kernel (using tag ${KERNEL_GIT_TAG})..."
 mkdir -p ~/android/kernel/${MICRODROID_KERNEL_VERSION}
 cd ~/android/kernel/${MICRODROID_KERNEL_VERSION}

@@ -1,30 +1,47 @@
 #!/bin/bash
 set -eo pipefail
 
-ARG_KERNEL_VERSION="$1"
-ARG_KERNEL_COMMIT_SHA="$2"
-ARG_GOS_BUILD_NUMBER="$3"
-ARG_MANIFEST_REPO_SUFFIX="$4"
+# Input arguments
+KERNEL_COMMIT_SHA="$1"
+GOS_BUILD_NUMBER="$2"
+KERNEL_COMMON_REPO_URL="$3"
+KERNEL_MANIFEST_REPO_URL="$4"
 
-export KERNEL_GIT_TAG="refs/tags/${ARG_GOS_BUILD_NUMBER}"
-export NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=true
+KERNEL_GIT_TAG_PREFIX=""
+if [[ "$KERNEL_MANIFEST_REPO_URL" =~ "github" ]]; then
+  KERNEL_GIT_TAG_PREFIX="refs/tags/"
+fi
 
-if [[ -n "$ARG_KERNEL_COMMIT_SHA" && -n "$ARG_KERNEL_VERSION" ]]; then
-  # Try to find git tags containing a commit with $ARG_KERNEL_COMMIT_SHA somewhere.
-  KERNEL_GIT_TAGS=$(curl -sL "https://github.com/GrapheneOS/kernel_common-${ARG_KERNEL_VERSION}/branch_commits/${ARG_KERNEL_COMMIT_SHA}" | grep -oP '/tag/\K[^"]\d+' || echo)
-  echo "[DEBUG] Candidate kernel tags in kernel_common-${ARG_KERNEL_VERSION}: $(echo $KERNEL_GIT_TAGS | tr -d '\n')."
-  for candidate in $KERNEL_GIT_TAGS; do
-    if [[ ${candidate} -le ${ARG_GOS_BUILD_NUMBER} ]]; then
-      # OK, the $candidate tag has that commit somewhere, now let's check that it is actually its HEAD commit.
-      if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_common-${ARG_KERNEL_VERSION}/tags" | jq -e --arg tag "$candidate" --arg sha "$ARG_KERNEL_COMMIT_SHA" '.[] | select(.name == $tag and (.commit.sha | startswith($sha)))' >/dev/null; then
-        echo "[DEBUG] ${candidate} has ${ARG_KERNEL_COMMIT_SHA} as HEAD (kernel_common-${ARG_KERNEL_VERSION})."
-        # OK, the $candidate tag in kernel_common points to the correct HEAD commit. Before choosing it, let's check if the tag also exists in the kernel_manifest repository.
-        if curl -sL "https://api.github.com/repos/GrapheneOS/kernel_manifest-${ARG_MANIFEST_REPO_SUFFIX}/tags" | jq -e ".[] | select(.name == \"$candidate\")" >/dev/null; then
-          echo "[DEBUG] Selected ${candidate} kernel tag (kernel_manifest-${ARG_MANIFEST_REPO_SUFFIX})."
-          export KERNEL_GIT_TAG="refs/tags/${candidate}" && export NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=false && break
+# Default kernel git tag
+KERNEL_GIT_TAG="${KERNEL_GIT_TAG_PREFIX}${GOS_BUILD_NUMBER}"
+
+# Always force kernel build string/timestamp unless overridden
+NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=true
+
+# Validate all necessary variables before proceeding
+if [[ -n "$KERNEL_COMMIT_SHA" && -n "$KERNEL_COMMON_REPO_URL" && -n "$KERNEL_MANIFEST_REPO_URL" ]]; then
+  
+  KERNEL_COMMON_TAGS_WITH_SHAS=$(git ls-remote --tags "$KERNEL_COMMON_REPO_URL")
+  KERNEL_COMMON_TAGS=$(git ls-remote --tags "$KERNEL_COMMON_REPO_URL" | grep -oP 'refs/tags/\K\d{10}' | sort -r | uniq )
+  KERNEL_MANIFEST_TAGS=$(git ls-remote --tags "$KERNEL_MANIFEST_REPO_URL" | grep -oP 'refs/tags/\K\d{10}' | sort -r | uniq )
+
+  for tag in $KERNEL_COMMON_TAGS; do
+    echo "[DEBUG] Evaluating kernel tag candidate: $tag"
+    if grep -q "${KERNEL_COMMIT_SHA}.*[[:space:]]refs/tags/${tag}" <<< "$KERNEL_COMMON_TAGS_WITH_SHAS"; then
+      echo "[DEBUG] Found ${KERNEL_COMMIT_SHA} as HEAD of ${tag}."
+      if [[ "$tag" =~ ^[0-9]+$ && "$tag" -le "$GOS_BUILD_NUMBER" ]]; then
+        if grep -q "${tag}" <<< "$KERNEL_MANIFEST_TAGS"; then
+          echo "[DEBUG] Selected kernel tag $tag after checking that ${KERNEL_MANIFEST_REPO_URL} has it."
+          KERNEL_GIT_TAG="${KERNEL_GIT_TAG_PREFIX}${tag}"
+          NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP=false
+          break
         fi
       fi
     fi
-  done;
+  done
+else
+  echo "[DEBUG] Missing input arguments; using default kernel git tag."
 fi
-echo "[DEBUG] Kernel build will use git tag ${KERNEL_GIT_TAG_OR_BRANCH_OVERRIDE:-$KERNEL_GIT_TAG} from kernel_manifest-${ARG_MANIFEST_REPO_SUFFIX}."
+
+echo "[DEBUG] Final kernel git tag: $KERNEL_GIT_TAG"
+echo "[DEBUG] Need to force kernel build string/timestamp: $NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP"

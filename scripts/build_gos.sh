@@ -104,14 +104,10 @@ rm -rf keys && mkdir -p keys/${PIXEL_CODENAME}
 cd keys/${PIXEL_CODENAME}
 CN=$(head /dev/urandom | tr -dc A-Za-z | head -c 8)
 export password=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)
-echo ${password} | ../../development/tools/make_key releasekey "/CN=${CN}/" || :
-echo ${password} | ../../development/tools/make_key platform "/CN=${CN}/" || :
-echo ${password} | ../../development/tools/make_key shared "/CN=${CN}/" || :
-echo ${password} | ../../development/tools/make_key media "/CN=${CN}/" || :
-echo ${password} | ../../development/tools/make_key networkstack "/CN=${CN}/" || :
-echo ${password} | ../../development/tools/make_key sdk_sandbox "/CN=${CN}/" || :
-echo ${password} | ../../development/tools/make_key bluetooth "/CN=${CN}/" || :
-openssl genrsa 4096 | openssl pkcs8 -topk8 -scrypt -passout pass:${password}  -out avb.pem
+for key in releasekey platform shared media networkstack bluetooth sdk_sandbox gmscompat_lib; do
+  echo ${password} | ../../development/tools/make_key $key "/CN=${CN}/" || :
+done;
+openssl genrsa 4096 | openssl pkcs8 -topk8 -scrypt -passout pass:${password} -out avb.pem
 sed -i "s/\['openssl', 'rsa',/\['openssl', 'rsa', '-passin', 'pass:${password}',/" ../../external/avb/avbtool.py # Make it prompt no password
 ../../external/avb/avbtool.py extract_public_key --key avb.pem --output avb_pkmd.bin
 cd ../..

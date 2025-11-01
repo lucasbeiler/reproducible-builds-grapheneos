@@ -16,6 +16,7 @@ jobs:
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
       AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
       PIXEL_CODENAMES: ${{ secrets.PIXEL_CODENAMES }}
+      GOS_RELEASE_CHANNELS: ${{ secrets.GOS_RELEASE_CHANNELS }}
       NONROOT_USER: ${{ secrets.NONROOT_USER }}
       GIT_COOKIES_B64: ${{ secrets.GIT_COOKIES_B64 }}
     steps:

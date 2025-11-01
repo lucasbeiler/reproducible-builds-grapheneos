@@ -3,6 +3,7 @@ set -eo pipefail
 
 # Initial builder preparation.
 export OFFICIAL_BUILD=true
+export GOS_GIT_TAG=$GOS_BUILD_NUMBER
 mkdir -pv ~/.ssh
 curl -sL https://grapheneos.org/allowed_signers > ~/.ssh/grapheneos_allowed_signers
 git config --global user.name "grapheneos"
@@ -12,11 +13,22 @@ if [[ -f "/.gitcookies" ]]; then
   git config --global http.cookiefile /.gitcookies
 fi
 
+# Check if it ends with 0 (security preview release don't).
+# NOTE: For now, I just want to test how different security preview releases tend to be when compared to normal releases.
+if [[ ! "$GOS_GIT_TAG" =~ 0$ ]]; then
+    # Check if the tag exists in the GrapheneOS/platform_manifest repo
+    if ! git ls-remote --tags https://github.com/GrapheneOS/platform_manifest.git \
+        | grep -q "refs/tags/${GOS_GIT_TAG}"; then
+        # If not, decrement by 1.
+        export GOS_GIT_TAG=$((GOS_BUILD_NUMBER - 1))
+    fi
+fi
+
 # Fetch OS source code tree.
 echo "[INFO] Fetching OS tree..."
 mkdir -p /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}
 cd /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}
-repo init --depth=1 -u https://github.com/GrapheneOS/platform_manifest.git -b refs/tags/${GOS_BUILD_NUMBER}
+repo init --depth=1 -u https://github.com/GrapheneOS/platform_manifest.git -b refs/tags/${GOS_GIT_TAG}
 cd .repo/manifests
 git config gpg.ssh.allowedSignersFile ~/.ssh/grapheneos_allowed_signers
 git verify-tag $(git describe)
@@ -28,9 +40,9 @@ source /usr/local/bin/detect_device.sh
 source /usr/local/bin/extract_info_from_official_build.sh
 
 # Fetch kernel source code tree.
-source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER https://github.com/GrapheneOS/kernel_common-${KERNEL_VERSION} https://gitlab.com/GrapheneOS/kernel_pixel
-echo "[INFO] Building kernel (using tag ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER})..."
-git clone https://gitlab.com/grapheneos/kernel_pixel.git -b ${KERNEL_GIT_TAG:-$GOS_BUILD_NUMBER} --recurse-submodules ~/kernel_pixel
+source /usr/local/bin/find_kernel_git_tag.sh $KERNEL_COMMIT_SHA $GOS_GIT_TAG https://github.com/GrapheneOS/kernel_common-${KERNEL_VERSION} https://gitlab.com/GrapheneOS/kernel_pixel
+echo "[INFO] Building kernel (using tag ${KERNEL_GIT_TAG:-$GOS_GIT_TAG})..."
+git clone https://gitlab.com/grapheneos/kernel_pixel.git -b ${KERNEL_GIT_TAG:-$GOS_GIT_TAG} --recurse-submodules ~/kernel_pixel
 cd ~/kernel_pixel
 
 # If needed, force localversion string and build timestamp to values obtained from the official build, in order to workaround some issues.
@@ -55,7 +67,7 @@ rm -rf ~/kernel_pixel
 unset KERNEL_GIT_TAG NEED_TO_FORCE_KERNEL_BUILD_STRING_AND_TIMESTAMP KLEAF_REPO_MANIFEST
 
 # Build microdroid kernel (pretty similar to the kernel build above).
-source /usr/local/bin/find_kernel_git_tag.sh $MICRODROID_KERNEL_COMMIT_SHA $GOS_BUILD_NUMBER https://github.com/GrapheneOS/kernel_common-${MICRODROID_KERNEL_VERSION} https://github.com/GrapheneOS/kernel_manifest-${MICRODROID_KERNEL_VERSION}
+source /usr/local/bin/find_kernel_git_tag.sh $MICRODROID_KERNEL_COMMIT_SHA $GOS_GIT_TAG https://github.com/GrapheneOS/kernel_common-${MICRODROID_KERNEL_VERSION} https://github.com/GrapheneOS/kernel_manifest-${MICRODROID_KERNEL_VERSION}
 
 echo "[INFO] Building microdroid kernel (using tag ${KERNEL_GIT_TAG})..."
 mkdir -p ~/android/kernel/${MICRODROID_KERNEL_VERSION}

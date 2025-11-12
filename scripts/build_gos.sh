@@ -86,7 +86,7 @@ export BUILD_DATETIME="$GOS_BUILD_DATETIME"
 
 # Prepare adevtool to fetch vendor blobs.
 echo "[INFO] Preparing adevtool..."
-yarnpkg install --cwd vendor/adevtool/
+yarnpkg --cwd vendor/adevtool/ install
 source build/envsetup.sh
 lunch sdk_phone64_x86_64-cur-user
 m aapt2 lpunpack deapexer dexdump arsclib

@@ -1,0 +1,32 @@
+# TODO: Turn some things here into dynamic GitHub Actions variables.
+name: Build and Push Docker Image (for compare_grapheneos_builds)
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - compare.Dockerfile
+      - scripts/compare_gos.sh
+      - scripts/extract_vbmeta_hashes_to_file.sh
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f compare.Dockerfile \
+            -t ghcr.io/lucasbeiler/compare_grapheneos_builds:latest .
+      - name: Push Docker image
+        run: docker push ghcr.io/lucasbeiler/compare_grapheneos_builds:latest

@@ -48,7 +48,7 @@ for i in $(seq 10); do
   for apex in $(find official/ reproduced/ -type f -name '*.apex'); do
     # Extract apex_payload.img with deapexer.
     deapexer --debugfs_path=/usr/sbin/debugfs --fsckerofs_path=/usr/bin/fsck.erofs extract ${apex} ${apex}.deapex
-    # Extract other files from the APEX by using unzip (except apex_payload.img because deapexer already does, and better).
+    # Extract other files from the APEX by using unzip (except apex_payload.img because deapexer already does).
     unzip ${apex} -d${apex}.unzip && rm -f ${apex}.unzip/apex_payload.img
     # Delete the original APEX file.
     rm -f ${apex}
@@ -131,7 +131,7 @@ find official/ reproduced/ -type f | gzip > /opt/build/grapheneos/comparing/oper
 # Compare the now unpacked install packages (official vs. reproduced).
 # NOTE: The `|| :` at the end is due to diffoscope returning non-zero exit codes when there are diffs.
 HTML_OUTPUT_FILE="operation_outputs/${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}.html"
-diffoscope --no-default-limits --new-file --max-page-diff-block-lines 5000 --exclude "*.png" --exclude "payload_properties.txt" --exclude-command ^zipinfo.* --exclude-command ^zipdetail.* --exclude "otacerts.zip" --exclude "*.pem" --exclude "**/META-INF/CERT*" --exclude "**/META-INF/MANIFEST.MF" --exclude "**/lost+found/**" --exclude "*vbmeta.img" --exclude "apex_pubkey" --exclude "avb_pkmd.bin" --exclude-directory-metadata yes  --html ${HTML_OUTPUT_FILE} official/ reproduced/ || :
+diffoscope --no-default-limits --tool-prefix-binutils "aarch64-linux-gnu-" --new-file --max-page-diff-block-lines 5000 --exclude "*.png" --exclude "payload_properties.txt" --exclude-command ^zipinfo.* --exclude-command ^zipdetail.* --exclude "otacerts.zip" --exclude "*.pem" --exclude "**/META-INF/CERT*" --exclude "**/META-INF/MANIFEST.MF" --exclude "**/lost+found/**" --exclude "*vbmeta.img" --exclude "apex_pubkey" --exclude "avb_pkmd.bin" --exclude-directory-metadata yes  --html ${HTML_OUTPUT_FILE} official/ reproduced/ || :
 
 # Fetch the Verified Boot calculated before and add it to the HTML_OUTPUT_FILE.
 AVB_STRING_H3=""

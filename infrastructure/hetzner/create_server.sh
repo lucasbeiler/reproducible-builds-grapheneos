@@ -37,7 +37,7 @@ for PIXEL_CODENAME in $PIXEL_CODENAMES; do
   # Check if $ARBITRARY_GOS_BUILD_NUMBER is set and that the release really does exist.
   if [ -n "${ARBITRARY_GOS_BUILD_NUMBER+x}" ]; then
     if ! curl -fsLI --url "https://releases.grapheneos.org/${PIXEL_CODENAME}-install-${ARBITRARY_GOS_BUILD_NUMBER}.zip" > /dev/null; then
-      echo "${PIXEL_CODENAME}-install-${ARBITRARY_GOS_BUILD_NUMBER}.zip does not exist anymore in releases.grapheneos.org."
+      echo "${PIXEL_CODENAME}-install-${ARBITRARY_GOS_BUILD_NUMBER}.zip does not exist anymore on releases.grapheneos.org."
       exit 1
     fi
   else

@@ -1,7 +1,7 @@
 FROM archlinux:latest
 
 RUN useradd -ms /bin/bash comparer && \
-    pacman -Syyuu --noconfirm base base-devel diffoscope binwalk procyon-decompiler jdk-openjdk gnupg llvm radare2 openssl openssh android-tools 7zip gzip enjarify cpio python-capstone zip unzip python-protobuf e2fsprogs guestfs-tools go dtc xz lz4 binutils aarch64-linux-gnu-binutils vim erofs-utils && \
+    pacman -Syyuu --noconfirm base base-devel diffoscope binwalk jdk-openjdk gnupg llvm radare2 fontforge openssl openssh android-tools 7zip gzip procyon-decompiler smali enjarify jadx cpio python-capstone zip unzip python-protobuf e2fsprogs go dtc xz lz4 binutils aarch64-linux-gnu-binutils vim erofs-utils && \
     mkdir -pv /opt/build/grapheneos/comparing/ && chown -R comparer:comparer /opt/build/;
 
 # Install an additional older 2.x version of binwalk (detects more stuff than 3.x).

@@ -91,7 +91,7 @@ source build/envsetup.sh
 lunch sdk_phone64_x86_64-cur-user
 m aapt2 lpunpack deapexer dexdump arsclib
 echo "[INFO] Downloading and placing vendor blobs..."
-PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin vendor/adevtool/bin/run generate-all -d ${PIXEL_CODENAME}
+script -c 'PATH="${PATH}":/sbin:/usr/sbin:/usr/local/sbin vendor/adevtool/bin/run generate-all -d "${PIXEL_CODENAME}"' /dev/null
 
 # Set up build environment for building the base OS and then build it.
 echo "[INFO] Building OS..."

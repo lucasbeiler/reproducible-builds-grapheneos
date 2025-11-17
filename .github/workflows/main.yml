@@ -3,7 +3,7 @@ name: Actions
 on:
   schedule:
     - cron: '*/30 * * * *' # Runs every 30th minute (its twice an hour).
-# on: workflow_dispatch
+  workflow_dispatch:
 
 jobs:
   run-script:

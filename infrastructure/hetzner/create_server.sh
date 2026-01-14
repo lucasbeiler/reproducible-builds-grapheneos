@@ -57,7 +57,7 @@ for PIXEL_CODENAME in $PIXEL_CODENAMES; do
         -X POST \
         -H "Authorization: Bearer $HETZNER_API_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"user_data\":\"$USER_DATA\",\"ssh_keys\":[\"main_one\"],\"image\":\"fedora-42\",\"location\":\"${HETZNER_LOCATION}\",\"labels\":{\"can_be_deleted_by_actions_job\":\"sure\",\"pixel_codename\":\"$PIXEL_CODENAME\",\"gos_build_number\":\"$GOS_BUILD_NUMBER\"},\"name\":\"m-$(date +%s)\",\"public_net\":{\"enable_ipv4\":true,\"enable_ipv6\":true},\"server_type\":\"cpx51\",\"start_after_create\":true}" \
+        -d "{\"user_data\":\"$USER_DATA\",\"ssh_keys\":[\"main_one\"],\"image\":\"fedora-42\",\"location\":\"${HETZNER_LOCATION}\",\"labels\":{\"can_be_deleted_by_actions_job\":\"sure\",\"pixel_codename\":\"$PIXEL_CODENAME\",\"gos_build_number\":\"$GOS_BUILD_NUMBER\"},\"name\":\"m-$(date +%s)\",\"public_net\":{\"enable_ipv4\":true,\"enable_ipv6\":true},\"server_type\":\"cpx62\",\"start_after_create\":true}" \
         "https://api.hetzner.cloud/v1/servers"
     echo "Created machine for ${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}!"
   else

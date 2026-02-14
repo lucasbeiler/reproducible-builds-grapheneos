@@ -104,7 +104,7 @@ rm -rf keys && mkdir -p keys/${PIXEL_CODENAME}
 cd keys/${PIXEL_CODENAME}
 CN=$(head /dev/urandom | tr -dc A-Za-z | head -c 8)
 export password=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)
-for key in releasekey platform shared media networkstack bluetooth sdk_sandbox gmscompat_lib; do
+for key in releasekey platform shared media networkstack bluetooth sdk_sandbox gmscompat_lib nfc; do
   echo ${password} | ../../development/tools/make_key $key "/CN=${CN}/" || :
 done;
 openssl genrsa 4096 | openssl pkcs8 -topk8 -scrypt -passout pass:${password} -out avb.pem

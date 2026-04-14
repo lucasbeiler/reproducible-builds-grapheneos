@@ -74,7 +74,7 @@ else
   echo "[DEBUG] Already have the expected kernel_common commit hash for this build. The expected microdroid kernel build string will be naturally produced, matching the official build."
 fi
 
-tools/bazel run //common:kernel_aarch64_microdroid_dist --config=stamp --lto=full
+tools/bazel run //common:kernel_aarch64_microdroid_dist --config=stamp --lto=thin
 cd /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}
 mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/Image packages/modules/Virtualization/guest/kernel/android15-${MICRODROID_KERNEL_VERSION}/arm64/kernel-${MICRODROID_KERNEL_VERSION}
 mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/* packages/modules/Virtualization/guest/kernel/android15-${MICRODROID_KERNEL_VERSION}/arm64/

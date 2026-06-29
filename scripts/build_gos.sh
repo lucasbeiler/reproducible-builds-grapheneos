@@ -76,8 +76,8 @@ fi
 
 tools/bazel run //common:kernel_aarch64_microdroid_dist --config=stamp --lto=thin
 cd /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}
-mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/Image packages/modules/Virtualization/guest/kernel/android15-${MICRODROID_KERNEL_VERSION}/arm64/kernel-${MICRODROID_KERNEL_VERSION}
-mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/* packages/modules/Virtualization/guest/kernel/android15-${MICRODROID_KERNEL_VERSION}/arm64/
+mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/Image packages/modules/Virtualization/guest/kernel/android16-${MICRODROID_KERNEL_VERSION}/arm64/kernel-${MICRODROID_KERNEL_VERSION}
+mv ~/android/kernel/${MICRODROID_KERNEL_VERSION}/out/kernel_aarch64_microdroid/dist/* packages/modules/Virtualization/guest/kernel/android16-${MICRODROID_KERNEL_VERSION}/arm64/
 rm -rf ~/android/kernel/${MICRODROID_KERNEL_VERSION}
 
 # Export important variables for OS builds.

@@ -35,7 +35,7 @@ finish_script() {
 trap finish_script EXIT
 
 # Install needed packages.
-sudo dnf -y install docker-cli docker-compose docker-buildx awscli2 curl git
+sudo dnf -y install docker-cli docker-compose docker-buildx awscli2 curl git runc
 systemctl enable --now docker
 usermod -a -G docker ${NONROOT_USER}
 

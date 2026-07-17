@@ -107,15 +107,14 @@ export password=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)
 for key in releasekey platform shared media networkstack bluetooth sdk_sandbox gmscompat_lib nfc; do
   echo ${password} | ../../development/tools/make_key $key "/CN=${CN}/" || :
 done;
-openssl genrsa 4096 | openssl pkcs8 -topk8 -scrypt -passout pass:${password} -out avb.pem
-sed -i "s/\['openssl', 'rsa',/\['openssl', 'rsa', '-passin', 'pass:${password}',/" ../../external/avb/avbtool.py # Make it prompt no password
-../../external/avb/avbtool.py extract_public_key --key avb.pem --output avb_pkmd.bin
+openssl genrsa 4096 | openssl pkcs8 -topk8 -nocrypt -out avb.pem
+ ../../external/avb/avbtool.py extract_public_key --key avb.pem --output avb_pkmd.bin
 cd ../..
 ssh-keygen -t ed25519 -f keys/${PIXEL_CODENAME}/id_ed25519 -N ""
 
 # Prepare ZIP packages.
 script/finalize.sh
-script/generate-release.sh ${PIXEL_CODENAME} ${GOS_BUILD_NUMBER}
+yes "$password" | script/generate-release.sh "${PIXEL_CODENAME}" "${GOS_BUILD_NUMBER}"
 
 # Save build.
 mv /opt/build/grapheneos/grapheneos-${GOS_BUILD_NUMBER}/releases/${GOS_BUILD_NUMBER}/release-${PIXEL_CODENAME}-${GOS_BUILD_NUMBER}/${PIXEL_CODENAME}-install-${GOS_BUILD_NUMBER}.zip /opt/build/grapheneos/comparing/reproduced/
